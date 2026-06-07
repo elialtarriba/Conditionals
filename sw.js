@@ -1,11 +1,9 @@
-const CACHE_NAME = 'conditionals-app-cache-v1';
+const CACHE_NAME = 'labores-v20-cache';
 const ASSETS = [
   './index.html',
   './manifest.json',
-  './logo.png',
-  './icon-192.png',
-  './icon-512.png',
-  './apple-touch-icon.png'
+  './icon.png',
+  './logo_corrected.jpg'
 ];
 
 self.addEventListener('install', (e) => {
@@ -32,12 +30,28 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  
   e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
+    caches.match(e.request, { ignoreSearch: true }).then((cachedResponse) => {
       if (cachedResponse) {
+        fetch(e.request).then((networkResponse) => {
+          if (networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(e.request, networkResponse);
+            });
+          }
+        }).catch(() => {});
         return cachedResponse;
       }
-      return fetch(e.request);
+      return fetch(e.request).then((networkResponse) => {
+        if (networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(e.request, clone);
+          });
+        }
+        return networkResponse;
+      });
     })
   );
 });
