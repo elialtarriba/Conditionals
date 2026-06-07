@@ -290,11 +290,17 @@ h1 em{color:var(--gold);font-style:italic;display:block}
           <div class="hcon">
             <div class="htitle">Quiz Interactivo</div>
             <div class="hdesc">Arrastra las respuestas para completar frases y conjugar verbos. 1 o 2 jugadores.</div>
-            <div class="htags"><span class="htag hl">124 preguntas</span><span class="htag">1–2 jugadores</span><span class="htag">5–15 preguntas</span></div>
+            <div class="htags"><span class="htag hl"><span id="home-qcount">124</span> preguntas</span><span class="htag">1–2 jugadores</span><span class="htag">5–15 preguntas</span></div>
           </div>
         </div>
         <button class="btn-c" onclick="event.stopPropagation();goQ()">🎯 Empezar Quiz</button>
       </div>
+      <button class="btn-c ol" onclick="openQE()" style="margin-top: 0.8rem; border-color: var(--gold); color: var(--gold); font-weight: 700;">📝 Agregar / Editar Preguntas</button>
+    </div>
+    <!-- BOTONES IMPORTAR/EXPORTAR DESAPERCIBIDOS -->
+    <div class="hfooter" style="display:flex; justify-content:center; gap:1.2rem; margin-top:2.5rem; opacity:0.35; font-size:0.75rem; font-family:var(--fb);">
+      <span onclick="exportData()" style="cursor:pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.35">📤 Exportar datos</span>
+      <span onclick="importData()" style="cursor:pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.35">📥 Importar datos</span>
     </div>
   </div>
 </div>
@@ -365,6 +371,91 @@ h1 em{color:var(--gold);font-style:italic;display:block}
   <div class="rvtb"><div class="rvti"><div class="rvt">Repaso de errores</div><div class="rvs" id="rvs"></div></div><button class="btq ex" onclick="ss('results');window.scrollTo(0,0)">← Volver</button></div>
   <div class="rvbody" id="rvb"></div>
 </div>
+<!-- QUESTION EDITOR -->
+<div id="qeditor" class="screen">
+  <div class="rvtb">
+    <div class="rvti">
+      <div class="rvt">Editor de Preguntas</div>
+      <div class="rvs">Banco de preguntas para el Quiz</div>
+    </div>
+    <button class="btq ex" onclick="ss('home')" style="border-color:var(--gold); color:var(--gold);">← Volver</button>
+  </div>
+  <div class="rvbody">
+    <!-- SEARCH BOX -->
+    <div style="margin-bottom: 1.2rem; display: flex; gap: 0.5rem; width: 100%;">
+      <input type="text" id="qe-search" placeholder="🔍 Buscar pregunta por texto o traducción..." oninput="filterQE()" style="flex: 1; border: 1.5px solid var(--pale); border-radius: 10px; padding: 0.5rem 0.8rem; font-family: var(--fb); font-size: 0.85rem; outline: none; transition: border-color 0.2s;">
+    </div>
+    
+    <!-- EDIT CARD -->
+    <div class="scard" style="margin-bottom: 1.2rem; position: relative;">
+      <!-- COUNTER -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1.5px solid var(--pale); padding-bottom: 0.5rem;">
+        <span style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--light); font-weight: 700;">Edición de Pregunta</span>
+        <span style="font-size: 0.75rem; font-weight: bold; color: var(--gold);" id="qe-counter">Pregunta 1 de 124</span>
+      </div>
+      
+      <!-- FORM FIELDS -->
+      <div class="sl">Tipo de Pregunta</div>
+      <div class="qcr" style="margin-top:0;"><select id="qe-type" onchange="toggleQEType()"><option value="drag">Completar (Drag & Drop)</option><option value="verb">Escribir verbo (Verb conjugation)</option></select></div>
+      
+      <div class="sl">Tipo de Condicional</div>
+      <div class="qcr" style="margin-top:0;"><select id="qe-cond"><option value="Zero">Zero Conditional</option><option value="First">First Conditional</option><option value="Second">Second Conditional</option><option value="Third">Third Conditional</option><option value="Mixed 1">Mixed Conditional 1</option><option value="Mixed 2">Mixed Conditional 2</option><option value="Mixed 3">Mixed Conditional 3</option></select></div>
+      
+      <div class="sl">Frase en Inglés (usa ___ para el hueco)</div>
+      <div class="pr2" style="margin-bottom:0.5rem;"><textarea id="qe-phrase" rows="2" style="width: 100%; border: 1.5px solid var(--pale); border-radius: 10px; padding: 0.5rem 0.7rem; font-family: var(--fb); font-size: 0.88rem; outline: none; resize: vertical;" placeholder="e.g. If you ___ (heat) water, it boils."></textarea></div>
+      
+      <div class="sl">Respuesta Correcta</div>
+      <div class="pr2"><input type="text" id="qe-answer" placeholder="e.g. heat"></div>
+      
+      <div id="qe-base-row" style="display:none;">
+        <div class="sl">Verbo Base en Infinitivo (para conjugación)</div>
+        <div class="pr2"><input type="text" id="qe-base" placeholder="e.g. heat"></div>
+      </div>
+      
+      <div class="sl">Respuestas Opcionales (4 opciones en total)</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.8rem;">
+        <div>
+          <span style="font-size: 0.58rem; color: var(--light); font-weight: bold; display: block; margin-bottom: 0.2rem;">Opción 1 (Correcta)</span>
+          <input type="text" id="qe-opt0" style="width: 100%; border: 1.5px solid var(--pale); border-radius: 8px; padding: 0.4rem 0.6rem; font-family: var(--fb); font-size: 0.8rem; outline: none;">
+        </div>
+        <div>
+          <span style="font-size: 0.58rem; color: var(--light); font-weight: bold; display: block; margin-bottom: 0.2rem;">Opción 2</span>
+          <input type="text" id="qe-opt1" style="width: 100%; border: 1.5px solid var(--pale); border-radius: 8px; padding: 0.4rem 0.6rem; font-family: var(--fb); font-size: 0.8rem; outline: none;">
+        </div>
+        <div>
+          <span style="font-size: 0.58rem; color: var(--light); font-weight: bold; display: block; margin-bottom: 0.2rem;">Opción 3</span>
+          <input type="text" id="qe-opt2" style="width: 100%; border: 1.5px solid var(--pale); border-radius: 8px; padding: 0.4rem 0.6rem; font-family: var(--fb); font-size: 0.8rem; outline: none;">
+        </div>
+        <div>
+          <span style="font-size: 0.58rem; color: var(--light); font-weight: bold; display: block; margin-bottom: 0.2rem;">Opción 4</span>
+          <input type="text" id="qe-opt3" style="width: 100%; border: 1.5px solid var(--pale); border-radius: 8px; padding: 0.4rem 0.6rem; font-family: var(--fb); font-size: 0.8rem; outline: none;">
+        </div>
+      </div>
+      
+      <div class="sl">Traducción al Español</div>
+      <div class="pr2"><input type="text" id="qe-es" placeholder="e.g. Si calientas agua, hierve."></div>
+      
+      <div class="sl">Estructura Gramatical</div>
+      <div class="pr2"><input type="text" id="qe-structure" placeholder="e.g. If + present simple, present simple"></div>
+      
+      <div class="sl">Explicación Gramatical</div>
+      <div class="pr2" style="margin-bottom: 0.5rem;"><textarea id="qe-exp" rows="2" style="width: 100%; border: 1.5px solid var(--pale); border-radius: 10px; padding: 0.5rem 0.7rem; font-family: var(--fb); font-size: 0.88rem; outline: none; resize: vertical;" placeholder="e.g. Zero Conditional: hechos generales o científicos."></textarea></div>
+    </div>
+    
+    <!-- NAVIGATION & ACTION BUTTONS -->
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.8rem;">
+      <button class="bfn" onclick="prevQE()" id="qe-prev-btn">← Anterior</button>
+      <button class="bfn pr" onclick="nextQE()" id="qe-next-btn">Siguiente →</button>
+    </div>
+    
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+      <button class="bfn" onclick="addQE()" style="background:var(--gl); color:var(--gold); border:1.5px solid var(--pd);">➕ Nueva Pregunta</button>
+      <button class="bfn" onclick="deleteQE()" style="background:var(--badl); color:var(--bad); border:1.5px solid var(--badl);">❌ Eliminar</button>
+    </div>
+    
+    <button class="bpl" onclick="saveQE()" style="margin-top: 0;">💾 Guardar Cambios</button>
+  </div>
+</div>
 <script>
 const CD=[
   {type:'Zero',color:'#5c3d1e',colorL:'#f0e4d4',title:'Zero Conditional',use:'Hechos, verdades científicas y rutinas. Siempre verdad.',structure:'<span>If</span> + present simple, <span>present simple</span>',examples:[{en:'If you heat water to 100°C, it boils.',es:'Si calientas agua a 100°C, hierve.'},{en:"If people don't sleep enough, they feel tired.",es:'Si la gente no duerme suficiente, se siente cansada.'},{en:'If you mix red and blue, you get purple.',es:'Si mezclas rojo y azul, obtienes morado.'}],tip:'<strong>Truco:</strong> Puedes sustituir "if" por "when" sin cambiar el significado. Expresa hechos universales.',illoId:0},
@@ -384,7 +475,7 @@ const IL=[
   `<svg viewBox="0 0 52 38" fill="none"><rect x="4" y="14" width="13" height="10" rx="3" stroke="#9e6b2a" stroke-width="1.1" fill="none"/><path d="M8 18h6M8 21h4" stroke="#c4956a" stroke-width="1" stroke-linecap="round"/><path d="M19 19h8" stroke="#7a5236" stroke-width="1.2" stroke-linecap="round"/><path d="M25 15l2 4-2 4" stroke="#7a5236" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="40" cy="14" r="6" stroke="#9e6b2a" stroke-width="1.1" fill="none" stroke-dasharray="2.5,2"/></svg>`,
   `<svg viewBox="0 0 52 38" fill="none"><path d="M4 22q4-5 8 0q4 5 8 0q4-5 8 0" stroke="#9e6b2a" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M4 29q4-5 8 0q4 5 8 0q4-5 8 0" stroke="#c4956a" stroke-width=".9" fill="none" stroke-linecap="round"/><path d="M33 19h16M33 23h16M33 15h16" stroke="#7a5236" stroke-width="1.1" stroke-linecap="round"/></svg>`,
 ];
-const QD=[
+let QD=[
 {type:'drag',cond:'Zero',phrase:"If you ___ water, it boils at 100°C.",answer:'heat',options:['heat','heated','will heat','have heated'],es:'Si calientas agua, hierve a 100°C.',structure:'If + present simple, present simple',exp:'Zero Conditional: verdad científica universal.'},
 {type:'drag',cond:'Zero',phrase:"Plants die if they ___ enough water.",answer:"don't get",options:["don't get","didn't get","won't get","haven't got"],es:'Las plantas mueren si no reciben suficiente agua.',structure:'If + present simple, present simple',exp:'Zero Conditional: hecho biológico general.'},
 {type:'drag',cond:'Zero',phrase:"If you touch a hot stove, you ___ your hand.",answer:'burn',options:['burn','burned','will burn','would burn'],es:'Si tocas una estufa caliente, te quemas la mano.',structure:'If + present simple, present simple',exp:'Zero Conditional: consecuencia inmediata.'},
@@ -487,6 +578,7 @@ function czoom(e){
 }
 function sc(n){np=n;document.querySelectorAll('.cbt').forEach((b,i)=>b.classList.toggle('sel',i===n-1));document.getElementById('pr1').classList.toggle('hidden',n<2);}
 function sg(){
+  saveSettings();
   const a=parseInt(document.getElementById('qpp').value);
   const pool=shuffle([...QD]).slice(0,np*a);
   pl=[];
@@ -547,6 +639,7 @@ function da(v){
 }
 function nt(){const p=pl[cpi];if(cqi>=p.questions.length-1){if(cpi<np-1){cpi++;cqi=0;}else{sr2();return;}}else cqi++;rq();window.scrollTo(0,0);}
 function sr2(){
+  saveStatsAndErrors();
   ss('results');const solo=np===1,maxQ=pl[0].questions.length;
   const rk=[...pl].map((p,i)=>({...p,idx:i})).sort((a,b)=>b.correct-a.correct||a.wrong-b.wrong);
   if(solo){const p=pl[0],pct=Math.round(p.correct/maxQ*100);document.getElementById('re').textContent=pct>=90?'🏆':pct>=70?'🎯':pct>=50?'📚':'💪';document.getElementById('rtit').textContent=pct>=90?'¡Excelente!':pct>=70?'¡Muy bien!':pct>=50?'Buen esfuerzo':'¡Sigue practicando!';document.getElementById('rs2').textContent=p.correct+' de '+maxQ+' correctas · '+pct+'%';}
@@ -570,6 +663,334 @@ function svr(){
 }
 function rw(pi){const p=pl[pi];pl=[{name:p.name,correct:0,wrong:0,wrongQ:[],questions:shuffle([...p.wrongQ])}];np=1;cpi=0;cqi=0;ss('quiz');rq();}
 function rwa(){const ac=pl.filter(p=>p.wrongQ&&p.wrongQ.length>0);pl=ac.map(p=>({name:p.name,correct:0,wrong:0,wrongQ:[],questions:shuffle([...p.wrongQ])}));np=pl.length;cpi=0;cqi=0;ss('quiz');rq();}
+
+function saveSettings() {
+  try {
+    const s = {
+      np: np,
+      pn0: document.getElementById('pn0') ? document.getElementById('pn0').value : '',
+      pn1: document.getElementById('pn1') ? document.getElementById('pn1').value : '',
+      qpp: document.getElementById('qpp') ? document.getElementById('qpp').value : '10'
+    };
+    localStorage.setItem('conditionals_settings', JSON.stringify(s));
+  } catch(e) {}
+}
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem('conditionals_settings');
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s.np) {
+        sc(s.np);
+      }
+      if (s.pn0 && document.getElementById('pn0')) document.getElementById('pn0').value = s.pn0;
+      if (s.pn1 && document.getElementById('pn1')) document.getElementById('pn1').value = s.pn1;
+      if (s.qpp && document.getElementById('qpp')) document.getElementById('qpp').value = s.qpp;
+    }
+  } catch(e) {}
+}
+
+function saveStatsAndErrors() {
+  try {
+    let statsRaw = localStorage.getItem('conditionals_stats');
+    let s = statsRaw ? JSON.parse(statsRaw) : { played: 0, correct: 0, wrong: 0, history: [] };
+    s.played += 1;
+    pl.forEach(p => {
+      s.correct += p.correct;
+      s.wrong += p.wrong;
+    });
+    s.history.push({
+      date: new Date().toLocaleDateString(),
+      players: pl.map(p => ({ name: p.name, correct: p.correct, wrong: p.wrong }))
+    });
+    if (s.history.length > 20) s.history.shift();
+    localStorage.setItem('conditionals_stats', JSON.stringify(s));
+
+    let errorsRaw = localStorage.getItem('conditionals_errors');
+    let errors = errorsRaw ? JSON.parse(errorsRaw) : [];
+    pl.forEach(p => {
+      if (p.wrongQ) {
+        p.wrongQ.forEach(q => {
+          if (!errors.some(e => e.phrase === q.phrase)) {
+            errors.push(q);
+          }
+        });
+      }
+    });
+    localStorage.setItem('conditionals_errors', JSON.stringify(errors));
+  } catch(e) {}
+}
+
+function exportData() {
+  try {
+    const data = {
+      settings: localStorage.getItem('conditionals_settings'),
+      stats: localStorage.getItem('conditionals_stats'),
+      errors: localStorage.getItem('conditionals_errors'),
+      questions: localStorage.getItem('conditionals_questions')
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "conditionals_data.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert("Error al exportar los datos: " + e.message);
+  }
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = readerEvent => {
+      try {
+        const data = JSON.parse(readerEvent.target.result);
+        let count = 0;
+        if (data.settings) { localStorage.setItem('conditionals_settings', data.settings); count++; }
+        if (data.stats) { localStorage.setItem('conditionals_stats', data.stats); count++; }
+        if (data.errors) { localStorage.setItem('conditionals_errors', data.errors); count++; }
+        if (data.questions) { localStorage.setItem('conditionals_questions', data.questions); count++; }
+        
+        if (count > 0) {
+          alert('Datos importados correctamente. La aplicación se reiniciará para aplicar los cambios.');
+          location.reload();
+        } else {
+          alert('El archivo no contiene datos válidos de esta aplicación.');
+        }
+      } catch(err) {
+        alert('Error al leer el archivo JSON: ' + err.message);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  };
+  input.click();
+}
+
+// === QUESTION/FLASHCARD EDITOR LOGIC ===
+let qeIndex = 0;
+let qeFiltered = [...QD];
+
+function updateCounts() {
+  const count = QD.length;
+  if (document.getElementById('home-qcount')) {
+    document.getElementById('home-qcount').textContent = count;
+  }
+}
+
+function openQE() {
+  if (document.getElementById('qe-search')) {
+    document.getElementById('qe-search').value = '';
+  }
+  qeFiltered = [...QD];
+  qeIndex = 0;
+  ss('qeditor');
+  showQE();
+}
+
+function showQE() {
+  const counter = document.getElementById('qe-counter');
+  const prevBtn = document.getElementById('qe-prev-btn');
+  const nextBtn = document.getElementById('qe-next-btn');
+  
+  if (qeFiltered.length === 0) {
+    counter.textContent = 'Sin preguntas';
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+    document.getElementById('qe-phrase').value = '';
+    document.getElementById('qe-answer').value = '';
+    document.getElementById('qe-opt0').value = '';
+    document.getElementById('qe-opt1').value = '';
+    document.getElementById('qe-opt2').value = '';
+    document.getElementById('qe-opt3').value = '';
+    document.getElementById('qe-es').value = '';
+    document.getElementById('qe-structure').value = '';
+    document.getElementById('qe-exp').value = '';
+    document.getElementById('qe-base').value = '';
+    document.getElementById('qe-base-row').style.display = 'none';
+    return;
+  }
+  
+  if (qeIndex < 0) qeIndex = 0;
+  if (qeIndex >= qeFiltered.length) qeIndex = qeFiltered.length - 1;
+  
+  const q = qeFiltered[qeIndex];
+  const origIndex = QD.indexOf(q);
+  counter.textContent = `Pregunta ${qeIndex + 1} de ${qeFiltered.length} (Global: #${origIndex + 1})`;
+  
+  prevBtn.disabled = qeIndex === 0;
+  nextBtn.disabled = qeIndex === qeFiltered.length - 1;
+  
+  document.getElementById('qe-type').value = q.type || 'drag';
+  document.getElementById('qe-cond').value = q.cond || 'Zero';
+  document.getElementById('qe-phrase').value = q.phrase || '';
+  document.getElementById('qe-answer').value = q.answer || '';
+  
+  const opts = q.options || [];
+  document.getElementById('qe-opt0').value = opts[0] || '';
+  document.getElementById('qe-opt1').value = opts[1] || '';
+  document.getElementById('qe-opt2').value = opts[2] || '';
+  document.getElementById('qe-opt3').value = opts[3] || '';
+  
+  document.getElementById('qe-es').value = q.es || '';
+  document.getElementById('qe-structure').value = q.structure || '';
+  document.getElementById('qe-exp').value = q.exp || '';
+  
+  document.getElementById('qe-base').value = q.base || '';
+  toggleQEType();
+}
+
+function toggleQEType() {
+  const type = document.getElementById('qe-type').value;
+  const baseRow = document.getElementById('qe-base-row');
+  baseRow.style.display = (type === 'verb' ? 'block' : 'none');
+}
+
+function prevQE() {
+  saveCurrentQEState();
+  if (qeIndex > 0) {
+    qeIndex--;
+    showQE();
+  }
+}
+
+function nextQE() {
+  saveCurrentQEState();
+  if (qeIndex < qeFiltered.length - 1) {
+    qeIndex++;
+    showQE();
+  }
+}
+
+function saveCurrentQEState() {
+  if (qeFiltered.length === 0) return;
+  const q = qeFiltered[qeIndex];
+  
+  q.type = document.getElementById('qe-type').value;
+  q.cond = document.getElementById('qe-cond').value;
+  q.phrase = document.getElementById('qe-phrase').value.trim();
+  q.answer = document.getElementById('qe-answer').value.trim();
+  
+  q.options = [
+    document.getElementById('qe-opt0').value.trim(),
+    document.getElementById('qe-opt1').value.trim(),
+    document.getElementById('qe-opt2').value.trim(),
+    document.getElementById('qe-opt3').value.trim()
+  ];
+  
+  if (!q.options.includes(q.answer)) {
+    q.options[0] = q.answer;
+    document.getElementById('qe-opt0').value = q.answer;
+  }
+  
+  q.es = document.getElementById('qe-es').value.trim();
+  q.structure = document.getElementById('qe-structure').value.trim();
+  q.exp = document.getElementById('qe-exp').value.trim();
+  
+  if (q.type === 'verb') {
+    q.base = document.getElementById('qe-base').value.trim();
+  } else {
+    delete q.base;
+  }
+}
+
+function filterQE() {
+  saveCurrentQEState();
+  const query = document.getElementById('qe-search').value.toLowerCase().trim();
+  if (!query) {
+    qeFiltered = [...QD];
+  } else {
+    qeFiltered = QD.filter(q => 
+      (q.phrase && q.phrase.toLowerCase().includes(query)) ||
+      (q.es && q.es.toLowerCase().includes(query)) ||
+      (q.answer && q.answer.toLowerCase().includes(query)) ||
+      (q.cond && q.cond.toLowerCase().includes(query))
+    );
+  }
+  qeIndex = 0;
+  showQE();
+}
+
+function addQE() {
+  saveCurrentQEState();
+  const newQ = {
+    type: 'drag',
+    cond: 'Zero',
+    phrase: 'If you ___ (verb), it works.',
+    answer: 'work',
+    options: ['work', 'worked', 'will work', 'would work'],
+    es: 'Si trabajas, funciona.',
+    structure: 'If + present simple, present simple',
+    exp: 'Zero Conditional.'
+  };
+  QD.push(newQ);
+  document.getElementById('qe-search').value = '';
+  qeFiltered = [...QD];
+  qeIndex = qeFiltered.length - 1;
+  showQE();
+  document.getElementById('qe-phrase').focus();
+}
+
+function deleteQE() {
+  if (qeFiltered.length === 0) return;
+  if (!confirm('¿Seguro que deseas eliminar esta pregunta?')) return;
+  
+  const q = qeFiltered[qeIndex];
+  const origIndex = QD.indexOf(q);
+  if (origIndex > -1) {
+    QD.splice(origIndex, 1);
+  }
+  qeFiltered.splice(qeIndex, 1);
+  
+  if (qeIndex >= qeFiltered.length) {
+    qeIndex = qeFiltered.length - 1;
+  }
+  showQE();
+}
+
+function saveQE() {
+  saveCurrentQEState();
+  let invalid = false;
+  QD.forEach((q) => {
+    if (!q.phrase || !q.answer || !q.options || q.options.some(o => !o)) {
+      invalid = true;
+    }
+  });
+  
+  if (invalid) {
+    alert('Error: Todas las preguntas deben tener frase, respuesta correcta y 4 opciones rellenas.');
+    return;
+  }
+  
+  try {
+    localStorage.setItem('conditionals_questions', JSON.stringify(QD));
+    updateCounts();
+    alert('¡Preguntas guardadas con éxito!');
+    ss('home');
+  } catch(e) {
+    alert('Error al guardar preguntas: ' + e.message);
+  }
+}
+
+// === INITIALIZATION ===
+try {
+  const customQD = localStorage.getItem('conditionals_questions');
+  if (customQD) {
+    QD = JSON.parse(customQD);
+  }
+} catch(e) {}
+
+updateCounts();
+loadSettings();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
