@@ -1,6 +1,6 @@
 const CACHE_NAME = 'conditionals-app-cache-v1';
 const ASSETS = [
-  './Conditionals.html',
+  './index.html',
   './manifest.json',
   './logo.png',
   './icon-192.png',

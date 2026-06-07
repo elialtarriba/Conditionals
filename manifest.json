@@ -1,7 +1,7 @@
 {
   "name": "Conditionals Master",
   "short_name": "Conditionals",
-  "start_url": "./Conditionals.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f5ede0",
   "theme_color": "#9e6b2a",
